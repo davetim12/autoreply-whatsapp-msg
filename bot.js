@@ -60,7 +60,7 @@ client.on('message', async message => {
     const from = message.from;
     const msg = message.body.trim();
 
-    if (msg.toLowerCase().includes("start") && !userProgress[from]) {
+    if (msg.toLowerCase().includes("start1") && !userProgress[from]) {
         userProgress[from] = { step: 0, answers: {} };
         message.reply(questions[0]);
         return;
