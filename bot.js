@@ -15,8 +15,13 @@ async function sendToPabbly(data) {
     }
 }
 
+// 👇 FIX: added puppeteer args for root server
 const client = new Client({
-    authStrategy: new LocalAuth()
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    }
 });
 
 // Track users' progress and answers
@@ -55,27 +60,22 @@ client.on('message', async message => {
     const from = message.from;
     const msg = message.body.trim();
 
-    // Start conversation trigger
     if (msg.toLowerCase().includes("start") && !userProgress[from]) {
         userProgress[from] = { step: 0, answers: {} };
         message.reply(questions[0]);
         return;
     }
 
-    // Continue conversation if user has started
     if (userProgress[from]) {
         let step = userProgress[from].step;
 
-        // Step 0-4: Free text answers
         if (step <= 4) {
             switch(step){
                 case 0: userProgress[from].answers.fullName = msg; break;
                 case 1: userProgress[from].answers.phone = msg; break;
                 case 2: userProgress[from].answers.email = msg; break;
                 case 3: userProgress[from].answers.streetAddress = msg; break;
-                case 4: 
-                    userProgress[from].answers.postalCode = msg; 
-                    break;
+                case 4: userProgress[from].answers.postalCode = msg; break;
             }
 
             step++;
@@ -84,7 +84,6 @@ client.on('message', async message => {
             if(step <= 4){
                 message.reply(questions[step]);
             } else {
-                // Step 5: Property Type options
                 message.reply(
                     "Which type of property do you own?\n1) 2BHK\n2) 3BHK\n3) 4BHK/Duplex\n4) Villa"
                 );
@@ -92,7 +91,6 @@ client.on('message', async message => {
             return;
         }
 
-        // Step 5: Property Type
         if(step === 5){
             if (msg === "1") userProgress[from].answers.propertyType = "2BHK";
             else if (msg === "2") userProgress[from].answers.propertyType = "3BHK";
@@ -101,14 +99,12 @@ client.on('message', async message => {
             else { message.reply("❌ Please reply with 1, 2, 3, or 4."); return; }
 
             userProgress[from].step++;
-            // Step 6: Budget options
             message.reply(
                 "What is your budget?\n1) Less then 10 lakhs\n2) 10 - 20 lakhs\n3) 20 - 30 lakhs\n4) 35+ lakhs"
             );
             return;
         }
 
-        // Step 6: Budget
         if(step === 6){
             if (msg === "1") userProgress[from].answers.budget = "Less then 10 lakhs";
             else if (msg === "2") userProgress[from].answers.budget = "10 - 20 lakhs";
@@ -117,28 +113,23 @@ client.on('message', async message => {
             else { message.reply("❌ Please reply with 1, 2, 3, or 4."); return; }
 
             userProgress[from].step++;
-            // Step 7: Call Time options
             message.reply(
                 "When can we call you? (Choose best time)\n1) Between 10:00A.M - 12:00P.M\n2) Between 1:00P.M - 3:00P.M\n3) Between 4:00P.M - 7:00P.M"
             );
             return;
         }
 
-        // Step 7: Call Time
         if(step === 7){
             if (msg === "1") userProgress[from].answers.callTime = "Between 10:00A.M - 12:00P.M";
             else if (msg === "2") userProgress[from].answers.callTime = "Between 1:00P.M - 3:00P.M";
-            else if (msg === "2") userProgress[from].answers.callTime = "Between 4:00P.M - 7:00P.M";
+            else if (msg === "3") userProgress[from].answers.callTime = "Between 4:00P.M - 7:00P.M";
             else { message.reply("❌ Please reply with 1, 2, or 3."); return; }
 
-            // End of conversation
             message.reply("✅ Thanks! We’ll get back to you soon with the details.");
             console.log(`Collected info from ${from}:`, userProgress[from].answers);
 
-            // 🔹 Send collected data to Pabbly
             await sendToPabbly(userProgress[from].answers);
 
-            // Clear progress
             delete userProgress[from];
             return;
         }
