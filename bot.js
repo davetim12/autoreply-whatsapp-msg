@@ -60,7 +60,7 @@ client.on('message', async message => {
     const from = message.from;
     const msg = message.body.trim();
 
-     if (msg.toLowerCase() === "Hello, I want to know more about your interior design services.") {
+     if (msg.toLowerCase() === "hello") {
         userProgress[from] = { step: 0, answers: {} };
         message.reply(questions[0]);
         return;
