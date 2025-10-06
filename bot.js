@@ -54,7 +54,7 @@ client.on('ready', async () => {
         budget: "20+ lakhs",
         callTime: "10AM-4PM"
     });
-});
+}); 
 
 client.on('message', async message => {
     const from = message.from;
